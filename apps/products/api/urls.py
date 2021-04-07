@@ -1,11 +1,11 @@
 from django.urls import path
-from apps.products.api.views.general_views import MeasureUnitListAPIView, IndicatorListAPIView, CategoryProductListAPIView
-#from apps.products.api.views.product_views import ProductListCreateAPIView,ProductRetrieveUpdateDestroyAPIView
+from rest_framework import routers
+from apps.products.api.views.product_views import ProductViewSet
+from apps.products.api.views.general_views import CategoryProductViewSet, MeasureUnitViewSet
 
-urlpatterns = [
-    path('measure_unit/', MeasureUnitListAPIView.as_view() , name= 'measure_unit'),
-    path('indicator/', IndicatorListAPIView.as_view() , name= 'indicator'),
-    path('category_product/', CategoryProductListAPIView.as_view() , name= 'category_product'),
-    """path('product/', ProductListCreateAPIView.as_view() , name= 'product_list_create'),
-    path('product/<int:pk>', ProductRetrieveUpdateDestroyAPIView.as_view() , name= 'product_retrieve_update_destroy')"""
-]
+router = routers.DefaultRouter()
+router.register(r'product', ProductViewSet, basename = 'products')
+router.register(r'category-product', CategoryProductViewSet, basename = 'category_product')
+router.register(r'measure-unit', MeasureUnitViewSet, basename = 'measure_unit')
+
+urlpatterns = router.urls

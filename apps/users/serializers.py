@@ -44,8 +44,8 @@ class UserSingUpSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=250)
     last_name = serializers.CharField(max_length=250)
     username = serializers.CharField(min_length=5,
-    max_length=20,
-    validators=[UniqueValidator(queryset=User.objects.all())])
+                                    max_length=20,
+                                    validators=[UniqueValidator(queryset=User.objects.all())])
     email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
     password = serializers.CharField(min_length=8, max_length=20)
     password_confirmation = serializers.CharField(min_length=8, max_length=20)

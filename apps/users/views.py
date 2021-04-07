@@ -4,11 +4,14 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from apps.users.serializers import UserModelSerializer, UserLoginSerializer,UserSingUpSerializer, AccountVerificationSerializer
 
 class UserLoginAPIView(APIView):
     """User login API view"""
+    permission_classes = (AllowAny,)
+    
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data = request.data)
         serializer.is_valid(raise_exception = True)
@@ -17,6 +20,8 @@ class UserLoginAPIView(APIView):
     
 class UserSingUpAPIView(APIView):
     """User sing up API view"""
+    permission_classes = (AllowAny,)
+    
     def post(self, request, *args, **kwargs):
         serializer = UserSingUpSerializer(data = request.data)
         serializer.is_valid(raise_exception = True)

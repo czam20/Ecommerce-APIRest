@@ -1,19 +1,32 @@
 from django.http import response
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework import viewsets
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
 from apps.products.api.serializers.product_serializer import ProductSerializer
 
 class ProductViewSet(viewsets.ModelViewSet):
+    """Product view set"""
     serializer_class = ProductSerializer
+    lookup_field = 'name'
     
     def get_queryset(self, pk = None):
         if pk is None:
             return self.get_serializer().Meta.model.objects.filter(state = True)
         else:
             return self.get_serializer().Meta.model.objects.filter(id = pk, state = True).first()
+        
+    def get_permissions(self):
+        """Asing permissions based on actions"""
+        if self.action in ['list', 'retrieve']:
+            permissions = [AllowAny]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permissions = [IsAuthenticated, IsAdminUser]
+        
+        return [permission() for permission in permissions]
         
     def create(self, request):
         #send information to the db

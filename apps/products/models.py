@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models.deletion import CASCADE
+
 from simple_history.models import HistoricalRecords
 
 from apps.base.models import BaseModel
@@ -31,7 +32,7 @@ class MeasureUnit(BaseModel):
     
 class CategoryProduct(BaseModel):
     
-    description = models.CharField('Descricion', max_length=50, unique=True, null=False, blank=False)
+    description = models.CharField('Description', max_length=50, unique=True, null=False, blank=False)
     historical = HistoricalRecords()
     
     @property
