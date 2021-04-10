@@ -8,18 +8,18 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from rest_framework.validators import UniqueValidator
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from datetime import timedelta
 import jwt
 from apps.users.models import User
-
 class UserModelSerializer(serializers.ModelSerializer):
     """User model serializer"""
     class Meta:
         model = User
         fields = ('name', 'last_name', 'username', 'password', 'email')
 
-class UserLoginSerializer(serializers.Serializer):
+class UserLoginSerializer(TokenObtainPairSerializer):
     """User login serializer"""
     username = serializers.CharField()
     password = serializers.CharField(min_length=8, max_length=64)
@@ -33,12 +33,6 @@ class UserLoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('Cuenta no ativa :(')
         self.context['user'] = user
         return data
-    
-    def create(self, data):
-        """Generate or retrieve new token"""
-        token, created = Token.objects.get_or_create(user=self.context['user'])
-        return self.context['user'], token.key
-    
 class UserSingUpSerializer(serializers.Serializer):
     """User sing up serializer"""
     name = serializers.CharField(max_length=250)
