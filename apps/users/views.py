@@ -1,40 +1,56 @@
 from datetime import datetime
 
-from rest_framework import status, generics
+from rest_framework import status, generics, exceptions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from apps.users.serializers import UserModelSerializer, UserLoginSerializer,UserSingUpSerializer, AccountVerificationSerializer
+from apps.users.models import User
+from apps.users.serializers import EmailSerializer, UserModelSerializer, UserLoginSerializer,UserSingUpSerializer, AccountVerificationSerializer, ResetPasswordSerializer
 
 class UserLoginAPIView(TokenObtainPairView):
     """User login API view"""
     permission_classes = (AllowAny,)
-    
-    def post(self, request, *args, **kwargs):
-        serializer = UserLoginSerializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
-        user, token = serializer.save()
-        return Response({'token':token,'user': UserModelSerializer(user).data}, status = status.HTTP_200_OK)
-    
+    serializer_class = UserLoginSerializer
 class UserSingUpAPIView(APIView):
     """User sing up API view"""
     permission_classes = (AllowAny,)
+    serializer_class = UserSingUpSerializer
     
     def post(self, request, *args, **kwargs):
-        serializer = UserSingUpSerializer(data = request.data)
+        serializer = self.serializer_class(data = request.data)
         serializer.is_valid(raise_exception = True)
         user = serializer.save()
         return Response({'user': UserModelSerializer(user).data}, status = status.HTTP_201_CREATED)
     
 class AccountVerificationAPIView(APIView):
     """Account verfication API view"""
+    serializer_class = AccountVerificationSerializer
+    
     def post(self, request, *args, **kwargs):
-        serializer = AccountVerificationSerializer(data = request.data)
+        serializer = self.serializer_class(data = request.data)
         serializer.is_valid(raise_exception = True)
         serializer.save()
         return Response({'message':'¡Cuenta verificada!'}, status = status.HTTP_200_OK)
+    
+class ResetPasswordRequestTokenAPIView(APIView):
+    """Provide a verification token that is sent by email to reset password"""
+    serializer_class = EmailSerializer
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data = request.data)
+        serializer.is_valid(raise_exception = True)
+        return Response({'message':'Se ha enviado un enlace de restauracion al correo'}, status = status.HTTP_200_OK)
+        
+class ResetPasswordConfirmAPIView(APIView):
+    serializer_class =  ResetPasswordSerializer
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data = request.data)
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        return Response({'message':'¡Cambio de contraseña exitoso!'}, status = status.HTTP_200_OK)
 
 """class Login(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
