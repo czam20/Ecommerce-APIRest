@@ -86,8 +86,8 @@ class UserSingUpSerializer(serializers.Serializer):
         
         return token
          
-#Serializer para listar
 class UserListSerializer(serializers.ModelSerializer):
+    """User list serializer"""
     class Meta:
         model = User
             
@@ -125,4 +125,81 @@ class AccountVerificationSerializer(serializers.Serializer):
         payload = self.context['payload']
         user = User.objects.get(username=payload['user'])
         user.is_verified = True
-        user.save()
+        user.save()  
+class EmailSerializer(serializers.Serializer):
+    """Email serializer"""
+    email = serializers.EmailField()
+    
+    def validate(self, data):
+        """Verify user alredy exist"""
+        email = data['email']
+        try:
+            user = User.objects.get(email = email)
+            self.send_email(user=user)
+        except:
+            raise serializers.ValidationError({
+                'email': "No se encontró un usuario asociado a este email. Intente con otro email.",
+            }) 
+            
+        return data
+    
+    def send_email(self, user):
+        """Send account vefirication link to given user."""
+        verification_token = self.gen_verification_token(user)
+        subject = "¡Hola @{}! ¿Has solicitado cambiar tu contraseña?".format(user.username)
+        from_email = 'Comparte ride <cczam@gmail.com>'
+        content = render_to_string('emails/users/account_verification.html', 
+        {'token': verification_token, 'user': user})
+        html_content = '<p>This is an <strong>important</strong> message.</p>'
+        msg = EmailMultiAlternatives(subject, content, from_email, [user.email])
+        msg.attach_alternative(content, "text/html")
+        msg.send()
+        
+    def gen_verification_token(self, user):
+        """Create JWT token that usar can use to verificate account."""
+        exp_date = timezone.now() + timedelta(days=1)
+        payload = {
+            'user': user.username,
+            'exp': int(exp_date.timestamp()),
+            'type': 'email_reset_password'
+        }
+        
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+        
+        return token 
+class ResetPasswordSerializer(serializers.Serializer):
+    """Reset password serializer"""
+    token = serializers.CharField()
+    new_password = serializers.CharField()
+    password_confirmation = serializers.CharField()
+    
+    def validate_token(self, data):
+        """Verify token is valid"""
+        try:
+            payload = jwt.decode(data, settings.SECRET_KEY, algorithms = ["HS256"])
+        except jwt.ExpiredSignatureError:
+            raise serializers.ValidationError('El enlace de verificación ha expirado')
+        except jwt.PyJWTError:
+            raise serializers.ValidationErrors('Token inválido')
+        if payload['type'] != 'email_reset_password':
+            raise serializers.ValidationError('Token inválido')
+        
+        self.context['payload']= payload
+        return data
+    
+    def validate(self, data):
+        """Verify passwords match"""
+        password = data['new_password']
+        password_conf = data['password_confirmation']
+        if password != password_conf:
+            raise serializers.ValidationError("Las contraseñas no coinciden")
+        password_validation.validate_password(password)
+        return data
+    
+    def save(self):
+        payload = self.context['payload']
+        user = User.objects.get(username=payload['user'])
+        user.set_password(self.validated_data['new_password'])
+        user.save()        
+        
+    
