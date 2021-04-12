@@ -114,7 +114,6 @@ class Logout(APIView):
                 
         except:
             return  Response({'error':'No se ha encontado token en la petición'}, status = status.HTTP_409_CONFLICT)
-        
     """
     
     
